@@ -7,10 +7,9 @@
 
 #define N 2048
 #define NUM_TESTS 1
-#define SAMPLE_SIZE 1000  // Количество элементов для проверки
-#define TOLERANCE 1e-3f   // Увеличенная допустимая погрешность (было 1e-4f)
+#define SAMPLE_SIZE 1000  
+#define TOLERANCE 1e-3f
 
-// Генерация случайной комплексной матрицы
 void generate_matrix(float complex *matrix) {
     for (int i = 0; i < N * N; i++) {
         float real = (float)rand() / RAND_MAX * 2.0f - 1.0f;
@@ -19,7 +18,6 @@ void generate_matrix(float complex *matrix) {
     }
 }
 
-// Наивное умножение матриц
 void naive_matrix_mult(const float complex *A, const float complex *B, float complex *C) {
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
@@ -31,15 +29,13 @@ void naive_matrix_mult(const float complex *A, const float complex *B, float com
     }
 }
 
-// Оптимизированное умножение матриц (блочный алгоритм)
 void optimized_matrix_mult(const float complex *A, const float complex *B, float complex *C) {
-    const int block_size = 32; // Размер блока
+    const int block_size = 32; 
     memset(C, 0, N * N * sizeof(float complex));
     
     for (int bi = 0; bi < N; bi += block_size) {
         for (int bj = 0; bj < N; bj += block_size) {
             for (int bk = 0; bk < N; bk += block_size) {
-                // Обработка блока
                 for (int i = bi; i < bi + block_size && i < N; i++) {
                     for (int j = bj; j < bj + block_size && j < N; j++) {
                         float complex sum = C[i * N + j];
@@ -54,7 +50,6 @@ void optimized_matrix_mult(const float complex *A, const float complex *B, float
     }
 }
 
-// Улучшенная проверка корректности (проверка случайной выборки элементов)
 int verify_results(const float complex *C1, const float complex *C2) {
     int mismatches = 0;
     const int step = (N * N) / SAMPLE_SIZE;
@@ -62,7 +57,7 @@ int verify_results(const float complex *C1, const float complex *C2) {
     for (int i = 0; i < N * N; i += step) {
         float diff = cabsf(C1[i] - C2[i]);
         if (diff > TOLERANCE) {
-            if (mismatches < 5) { // Ограничиваем количество выводимых несоответствий
+            if (mismatches < 5) { 
                 printf("Mismatch at %d: (%.4f + %.4fi) vs (%.4f + %.4fi), diff=%.4f\n", 
                        i, crealf(C1[i]), cimagf(C1[i]), 
                        crealf(C2[i]), cimagf(C2[i]), diff);
@@ -86,7 +81,6 @@ void print_performance(double time, const char *method) {
 
 
 int main() {
-    // Выделение памяти с проверкой ошибок
     float complex *A = malloc(N * N * sizeof(float complex));
     float complex *B = malloc(N * N * sizeof(float complex));
     float complex *C_naive = malloc(N * N * sizeof(float complex));
@@ -98,18 +92,15 @@ int main() {
         exit(1);
     }
     
-    // Генерация случайных матриц
     srand(time(NULL));
     generate_matrix(A);
     generate_matrix(B);
     
-    // Тестирование наивного алгоритма
     clock_t start = clock();
     naive_matrix_mult(A, B, C_naive);
     double naive_time = (double)(clock() - start) / CLOCKS_PER_SEC;
     print_performance(naive_time, "Naive method");
     
-    // Тестирование BLAS
     start = clock();
     cblas_cgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, 
                N, N, N, 
@@ -121,7 +112,6 @@ int main() {
     double blas_time = (double)(clock() - start) / CLOCKS_PER_SEC;
     print_performance(blas_time, "BLAS method");
     
-    // Проверка корректности (сравниваем BLAS с наивным)
     printf("\nVerifying Naive vs BLAS...\n");
     if (!verify_results(C_naive, C_blas)) {
         printf("Warning: Naive and BLAS results differ significantly!\n");
@@ -129,13 +119,11 @@ int main() {
         printf("Naive and BLAS results match within tolerance.\n");
     }
     
-    // Тестирование оптимизированного алгоритма
     start = clock();
     optimized_matrix_mult(A, B, C_optimized);
     double optimized_time = (double)(clock() - start) / CLOCKS_PER_SEC;
     print_performance(optimized_time, "Optimized method");
     
-    // Проверка корректности оптимизированного алгоритма
     printf("\nVerifying Optimized vs BLAS...\n");
     if (!verify_results(C_blas, C_optimized)) {
         printf("Warning: Optimized and BLAS results differ significantly!\n");
@@ -143,16 +131,13 @@ int main() {
         printf("Optimized and BLAS results match within tolerance.\n");
     }
     
-    // Расчет относительной производительности
     double optimized_perf = (2.0 * N * N * N) / optimized_time * 1e-6;
     double blas_perf = (2.0 * N * N * N) / blas_time * 1e-6;
     double percentage = (optimized_perf / blas_perf) * 100;
     printf("\nOptimized method achieves %.1f%% of BLAS performance\n", percentage);
     
-    // Вывод информации об авторе
     printf("\nИсаков Андрей Витальевич 090304-РПИа-о24\n");
     
-    // Освобождение памяти
     free(A);
     free(B);
     free(C_naive);
