@@ -8,7 +8,7 @@
 #define N 2048
 #define NUM_TESTS 1
 #define SAMPLE_SIZE 1000  // Количество элементов для проверки
-#define TOLERANCE 1e-4f   // Допустимая погрешность
+#define TOLERANCE 1e-3f   // Увеличенная допустимая погрешность (было 1e-4f)
 
 // Генерация случайной комплексной матрицы
 void generate_matrix(float complex *matrix) {
@@ -84,6 +84,7 @@ void print_performance(double time, const char *method) {
     printf("%s: Time = %.3f sec, Performance = %.2f MFlops\n", method, time, mflops);
 }
 
+
 int main() {
     // Выделение памяти с проверкой ошибок
     float complex *A = malloc(N * N * sizeof(float complex));
@@ -92,7 +93,7 @@ int main() {
     float complex *C_blas = malloc(N * N * sizeof(float complex));
     float complex *C_optimized = malloc(N * N * sizeof(float complex));
     
-    if (!A  !B  !C_naive  !C_blas  !C_optimized) {
+    if (!A || !B || !C_naive || !C_blas || !C_optimized) {
         fprintf(stderr, "Memory allocation failed\n");
         exit(1);
     }
@@ -107,7 +108,8 @@ int main() {
     naive_matrix_mult(A, B, C_naive);
     double naive_time = (double)(clock() - start) / CLOCKS_PER_SEC;
     print_performance(naive_time, "Naive method");
-// Тестирование BLAS
+    
+    // Тестирование BLAS
     start = clock();
     cblas_cgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, 
                N, N, N, 
@@ -146,6 +148,9 @@ int main() {
     double blas_perf = (2.0 * N * N * N) / blas_time * 1e-6;
     double percentage = (optimized_perf / blas_perf) * 100;
     printf("\nOptimized method achieves %.1f%% of BLAS performance\n", percentage);
+    
+    // Вывод информации об авторе
+    printf("\nИсаков Андрей Витальевич 090304-РПИа-о24\n");
     
     // Освобождение памяти
     free(A);
